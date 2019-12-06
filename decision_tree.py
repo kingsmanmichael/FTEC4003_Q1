@@ -1,78 +1,126 @@
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier  # Import Decision Tree Classifier
-from sklearn.model_selection import train_test_split  # Import train_test_split function
-from sklearn import metrics  # Import scikit-learn metrics module for accuracy calculation
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import preprocessing
 
-#####################################
-# Read the training data from & convert all string values into integer values.
-
+# 1. Read the training data and format it from csv to python dataframe.
 train = pd.read_csv("bank-train.csv", header=None, sep=';')
 train_headers = train.iloc[0]
 train_df = pd.DataFrame(train.values[1:], columns=train_headers)
 
-train_df['job'] = train_df['job'].map(
-    {'admin.': 1, 'blue-collar': 2, 'entrepreneur': 3, 'housemaid': 4, 'management': 5,
-     'retired': 6, 'self-employed': 7, 'services': 8, 'student': 9, 'technician': 10,
-     'unemployed': 11, 'unknown': 12})
-train_df['marital'] = train_df['marital'].map({'divorced': 1, 'married': 2, 'single': 3, 'unknown': 4})
-train_df['education'] = train_df['education'].map({'basic.4y': 1, 'basic.6y': 2, 'basic.9y': 3, 'high.school': 4,
-                                                   'illiterate': 5, 'professional.course': 6, 'university.degree': 7,
-                                                   'unknown': 8})
-train_df['default'] = train_df['default'].map({'no': 1, 'unknown': 2, 'yes': 3})
-train_df['housing'] = train_df['housing'].map({'no': 1, 'unknown': 2, 'yes': 3})
-train_df['loan'] = train_df['loan'].map({'no': 1, 'unknown': 2, 'yes': 3})
-train_df['contact'] = train_df['contact'].map({'cellular': 1, 'telephone': 2})
-train_df['month'] = train_df['month'].map(
-    {'mar': 3, 'apr': 4, 'may': 5, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10,
-     'nov': 11, 'dec': 12})
-train_df['day_of_week'] = train_df['day_of_week'].map({'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5})
-train_df['poutcome'] = train_df['poutcome'].map({'failure': 1, 'nonexistent': 2, 'success': 3})
+# 2. Assign the numerical values to the string values.
+le = preprocessing.LabelEncoder()
+le.fit(['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services',
+        'student', 'technician', 'unemployed', 'unknown'])
+train_df['job'] = le.transform(train_df['job'])
 
-feature_cols = ['age', 'job', 'marital', 'education', 'default', 'housing', 'loan', 'contact', 'month',
-                'day_of_week', 'campaign', 'pdays', 'previous', 'poutcome', 'emp.var.rate', 'cons.price.idx',
-                'cons.conf.idx', 'euribor3m', 'nr.employed']
-#####################################
-# Use the training data to build a decision tree model by gini.
+le = preprocessing.LabelEncoder()
+le.fit(['divorced', 'married', 'single', 'housemaid', 'unknown', 'retired'])
+train_df['marital'] = le.transform(train_df['marital'])
 
-X = train_df.iloc[:, :19]
+le = preprocessing.LabelEncoder()
+le.fit(['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree',
+        'unknown'])
+train_df['education'] = le.transform(train_df['education'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+train_df['default'] = le.transform(train_df['default'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+train_df['housing'] = le.transform(train_df['housing'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+train_df['loan'] = le.transform(train_df['loan'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['cellular', 'telephone'])
+train_df['contact'] = le.transform(train_df['contact'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])
+train_df['month'] = le.transform(train_df['month'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['mon', 'tue', 'wed', 'thu', 'fri'])
+train_df['day_of_week'] = le.transform(train_df['day_of_week'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['failure', 'nonexistent', 'success'])
+train_df['poutcome'] = le.transform(train_df['poutcome'])
+
+for col in train_df.columns:
+    if col == 'y':
+        continue
+    train_df[col] = pd.to_numeric(train_df[col])
+
+# 3. Select useful attributes.
+# feature_cols = ['age', 'job', 'marital', 'education', 'default', 'housing', 'loan', 'contact', 'month',
+#                 'day_of_week', 'campaign', 'pdays', 'previous', 'poutcome', 'emp.var.rate', 'cons.price.idx',
+#                 'cons.conf.idx', 'euribor3m', 'nr.employed']
+feature_cols = ['age', 'job', 'default', 'campaign', 'pdays',
+                'emp.var.rate', 'cons.conf.idx', 'nr.employed']
+X = train_df[feature_cols]
 y = train_df.y
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99, random_state=1)
 
-# Create Decision Tree classifer object
-dtc = DecisionTreeClassifier(criterion="gini")
-# Train Decision Tree Classifer
-dtc = dtc.fit(X_train, y_train)
-# Predict the response for test dataset
-y_pred = dtc.predict(X_test)
-print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
-# train_result = pd.DataFrame(y_pred.tolist(), columns=['Label'])
-# train_result.index.name = 'ID'
-#####################################
-# Use the model to predict the results of the test data.
+# 4. Train the data using decision tree with gini.
+dtc = DecisionTreeClassifier(criterion = "gini")
+dtc = dtc.fit(X,y)
 
+# 5. Read the testing data and format it from csv to python dataframe.
 test = pd.read_csv("bank-test.csv", header=None, sep=';')
 test_headers = test.iloc[0]
 test_df = pd.DataFrame(test.values[1:], columns=test_headers)
 
-test_df['job'] = test_df['job'].map({'admin.': 1, 'blue-collar': 2, 'entrepreneur': 3, 'housemaid': 4, 'management': 5,
-                                   'retired': 6, 'self-employed': 7, 'services': 8, 'student': 9, 'technician': 10,
-                                   'unemployed': 11, 'unknown': 12})
-test_df['marital'] = test_df['marital'].map({'divorced': 1, 'married': 2, 'single': 3, 'unknown': 4})
-test_df['education'] = test_df['education'].map({'basic.4y': 1, 'basic.6y': 2, 'basic.9y': 3, 'high.school': 4,
-                                               'illiterate': 5, 'professional.course': 6, 'university.degree': 7,
-                                               'unknown': 8})
-test_df['default'] = test_df['default'].map({'no': 1, 'unknown': 2, 'yes': 3})
-test_df['housing'] = test_df['housing'].map({'no': 1, 'unknown': 2, 'yes': 3})
-test_df['loan'] = test_df['loan'].map({'no': 1, 'unknown': 2, 'yes': 3})
-test_df['contact'] = test_df['contact'].map({'cellular': 1, 'telephone': 2})
-test_df['month'] = test_df['month'].map({'mar': 3, 'apr': 4, 'may': 5, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10,
-                                       'nov': 11, 'dec': 12})
-test_df['day_of_week'] = test_df['day_of_week'].map({'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5})
-test_df['poutcome'] = test_df['poutcome'].map({'failure': 1, 'nonexistent': 2, 'success': 3})
+# 6. Assign the numerical values to the string values.
+le = preprocessing.LabelEncoder()
+le.fit(['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services',
+        'student', 'technician', 'unemployed', 'unknown'])
+test_df['job'] = le.transform(test_df['job'])
 
-test_pred = dtc.predict(test_df)
+le = preprocessing.LabelEncoder()
+le.fit(['divorced', 'married', 'single', 'housemaid', 'unknown', 'retired'])
+test_df['marital'] = le.transform(test_df['marital'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree',
+        'unknown'])
+test_df['education'] = le.transform(test_df['education'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+test_df['default'] = le.transform(test_df['default'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+test_df['housing'] = le.transform(test_df['housing'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['no', 'unknown', 'yes'])
+test_df['loan'] = le.transform(test_df['loan'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['cellular', 'telephone'])
+test_df['contact'] = le.transform(test_df['contact'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])
+test_df['month'] = le.transform(test_df['month'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['mon', 'tue', 'wed', 'thu', 'fri'])
+test_df['day_of_week'] = le.transform(test_df['day_of_week'])
+
+le = preprocessing.LabelEncoder()
+le.fit(['failure', 'nonexistent', 'success'])
+test_df['poutcome'] = le.transform(test_df['poutcome'])
+
+# 7. Fit the testing data into the decision tree model.
+test_pred = dtc.predict(test_df[feature_cols])
 test_result = pd.DataFrame(test_pred.tolist(), columns=['Label'])
 test_result.index.name = 'ID'
 
-# Output as a csv file.
-test_result.to_csv(r'decision_tree_result.csv')
+# 8. Output the csv file for evaluation of the f-measure.
+test_result.to_csv(r'submission1_decision_tree.csv')
+# f-meaure = 0.314827
