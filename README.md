@@ -1,4 +1,4 @@
-#FTEC4003 Project Task 1
+# FTEC4003 Project Task 1
 
 ### Group Members:
 1. Lee Yi Chun (1155108143)
