@@ -1,11 +1,13 @@
 # FTEC4003 Project Task 1
 
+This task is intended to compare the accuracy of decision tree and SVM through f-measure.
+
 ### Group Members:
 1. Lee Yi Chun (1155108143)
 2. Liou King Long (1155110131)
 
 ### Files Included:
-1. _****bank-test.csv****_: Training data
+1. _**bank-test.csv**_: Training data
 2. _**bank-train.csv**_: Testing data
 3. _**Desicion_Tree.ipynb**_: The code for running decision tree in jupyter notebook
 4. _**Desicion_Tree.py**_: The code for running decision tree
