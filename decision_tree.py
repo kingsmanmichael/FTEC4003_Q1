@@ -123,4 +123,4 @@ test_result.index.name = 'ID'
 
 # 8. Output the csv file for evaluation of the f-measure.
 test_result.to_csv(r'submission1_decision_tree.csv')
-# f-meaure = 0.314827
+# f-meaure = 0.31901
